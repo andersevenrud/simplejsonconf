@@ -41,28 +41,20 @@ function mergeDeep(target, source) {
 }
 
 /**
- * Sends a response directly to the connection
- *
- * @property  {Function}        get     Alias of `getJSON` without the first argument
- * @property  {Function}        set     Alias of `setJSON` without the first argument
- * @typedef ConfigProxy
- */
-
-/**
- * Creates a new proxy object with get/set methods for given JSON object.
+ * Creates a new proxy object with getJSON/setJSON methods for given JSON object.
  *
  * @param {Object}  obj       The JSON object
  *
  * @memberof simplejsonconf
  * @function from
- * @return {ConfigProxy} A proxy object
+ * @return {Object} A proxy object
  */
 module.exports.from = (obj) => {
   return {
-    get: (path, defaultValue) => {
+    getJSON: (path, defaultValue) => {
       return module.exports.getJSON(obj, path, defaultValue);
     },
-    set: (path, value, opts) => {
+    setJSON: (path, value, opts) => {
       return module.exports.setJSON(obj, path, value, opts);
     }
   };

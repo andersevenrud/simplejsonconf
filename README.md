@@ -23,5 +23,5 @@ m.setJSON({foo: {bar: 'baz', something: null}}, 'foo.bar', 'value', {
 // or with a proxy:
 
 m.from({foo: {bar: 'baz'}})
- .set('foo.bar', 'baz');
+ .setJSON('foo.bar', 'value') // => {foo: {bar: 'value'}}
 ```
