@@ -1,0 +1,19 @@
+{
+  "name": "simplejsonconf",
+  "version": "1.0.0",
+  "description": "Use JSON as a configuration file",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andersevenrud/simplejsonconf.git"
+  },
+  "author": "Anders Evenrud <andersevenrud@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/andersevenrud/simplejsonconf/issues"
+  },
+  "homepage": "https://github.com/andersevenrud/simplejsonconf#readme"
+}
