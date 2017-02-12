@@ -1,6 +1,6 @@
 {
   "name": "simplejsonconf",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Use JSON as a configuration file",
   "main": "index.js",
   "scripts": {

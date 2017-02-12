@@ -7,6 +7,8 @@
  * @license MIT
  */
 
+'use strict';
+
 /*
  * Check if this is an "Object"
  */
