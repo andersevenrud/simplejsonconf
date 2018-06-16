@@ -1,7 +1,7 @@
 {
   "name": "simplejsonconf",
-  "version": "1.0.7",
-  "description": "Use JSON as a configuration file",
+  "version": "2.0.0",
+  "description": "A simple library to manage JSON as ex. a configuration file",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

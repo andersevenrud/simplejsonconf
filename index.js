@@ -1,177 +1,167 @@
-/*!
+/**
  * Module: simplejsonconf
  *
  * Use JSON as a configuration file
  *
  * @author Anders Evenrud <andersevenrud@gmail.com>
  * @license MIT
+ * @preserve
  */
 
-'use strict';
+/* Deep-copies any json data */
+const clone = json => JSON.parse(JSON.stringify(json));
 
-/*
- * Check if this is an "Object"
- */
-function isObject(item) {
-  return (item && typeof item === 'object' && !Array.isArray(item) && item !== null);
-}
+/* Splits a path  Splits a string into piecesstring into pieces */
+const splitKey = key => key.split(/\./g);
 
-/*
- * Merges the two objects together
- */
-function mergeDeep(target, source) {
-  if ( isObject(target) && isObject(source) ) {
-    for ( var key in source ) {
-      if ( isObject(source[key]) ) {
-        if ( !target[key] || typeof target[key] !== typeof source[key] ) {
-          Object.assign(target, {
-            [key]: {}
-          });
+/* Check if is of a nullable type */
+const isNullable = v => typeof v === 'undefined'
+  || v === null;
+
+/* Check if an object */
+const isObject = v => !!v
+  && typeof v === 'object'
+  && !Array.isArray(v);
+
+/* Deep-merges two objects */
+const merge = (target, source) => {
+  if (isObject(target) && isObject(source)) {
+    for (let key in source) {
+      if (isObject(source[key])) {
+        if (!target[key] || typeof target[key] !== typeof source[key]) {
+          Object.assign(target, {[key]: {}});
         }
-        mergeDeep(target[key], source[key]);
+
+        merge(target[key], source[key]);
       } else {
-        Object.assign(target, {
-          [key]: source[key]
-        });
+        Object.assign(target, {[key]: source[key]});
       }
     }
   }
 
   return target;
-}
+};
 
 /**
- * Creates a new proxy object with getJSON/setJSON methods for given JSON object.
- *
- * @param {Object}  obj       The JSON object
- *
- * @memberof simplejsonconf
- * @function from
- * @return {Object} A proxy object
+ * Resolves an entry in the tree (i.e. parent of value)
+ * @param {object} tree The JSON object
+ * @param {string} [key] The key/path to resolve
+ * @return {*} A value
  */
-module.exports.from = (obj) => {
+const resolveMutate = (tree, key) => {
+  const path = splitKey(key);
+  const len = path.length;
+  const lastKey = len === 1 ? path[0] : path.pop();
+  const resolved = len === 1 ? tree: getTreeValue(tree, path.join('.'));
+
+  return [resolved, lastKey];
+};
+
+/**
+ * Gets a value from a JSON tree
+ * @param {object} tree The JSON object
+ * @param {string} [key] The key/path to resolve
+ * @param {*} [defaultValue] Return this if resolved value was undefined
+ * @return {*} A value
+ */
+const getTreeValue = (tree, key, defaultValue) => {
+  if (isNullable(key)) {
+    return tree;
+  }
+
+  let result;
+
+  try {
+    result = splitKey(key)
+      .reduce((result, key) => result[key], Object.assign({}, tree));
+  } catch (e) { /* noop */ }
+
+  return typeof result === 'undefined' ? defaultValue : result;
+};
+
+/**
+ * Sets a value in a JSON tree
+ * @param {object} tree The JSON object
+ * @param {string} [key] The key/path to resolve
+ * @param {*} value The value
+ * @param {object} [options] Options
+ * @param {boolean} [options.merge=true] Merge objects if value is also an object
+ * @return {*} The new value
+ */
+const setTreeValue = (tree, key, value, options) => {
+  const [resolved, lastKey] = resolveMutate(tree, key);
+
+  if (isNullable(resolved[lastKey])) {
+    resolved[lastKey] = {};
+  }
+
+  const newValue = merge(resolved[lastKey], value);
+  resolved[lastKey] = newValue;
+  return newValue;
+};
+
+/**
+ * Pushes a value into resolved array in JSON tree
+ * @param {object} tree The JSON object
+ * @param {string} [key] The key/path to resolve
+ * @param {*} value The value
+ * @return {*} The new value
+ */
+const pushTreeValue = (tree, key, value) => {
+  const resolved = getTreeValue(tree, key);
+  if (!Array.isArray(resolved)) {
+    throw new Error(`The key '${key}' is not an array`);
+  }
+
+  resolved.push(value);
+
+  return resolved;
+};
+
+/**
+ * Removed an entry from resolved key in JSON tree
+ * @param {object} tree The JSON object
+ * @param {string} [key] The key/path to resolve
+ * @return {*} The resulting object/array
+ */
+const removeTreeKey = (tree, key) => {
+  const [resolved, lastKey] = resolveMutate(tree, key);
+
+  if (typeof resolved[lastKey] !== 'undefined') {
+    delete resolved[lastKey];
+  }
+
+  return resolved;
+};
+
+/**
+ * Creates a new simplejsonconf wrapper
+ * @param {object} initialTree Initial settings tree
+ * @return {simplejsonconf}
+ */
+const simplejsonconf = (initialTree) => {
+  let tree;
+  const setInitial = t => (tree = clone(t));
+
+  setInitial(initialTree);
+
+  /**
+   * @property {Function} get Get a value => (key, [defaultValue])
+   * @property {Function} set Set a value => (key, value, [options])
+   * @property {Function} push Pushes a value => (key, value)
+   * @property {Function} remove Removes an entry/value => (key)
+   * @property {Function} reset Resets the tree to riginal or defined tree => ([to])
+   * @property {Function} toString Get JSON encoded string of current tree
+   * @typedef simplejsonconf
+   */
   return {
-    getJSON: (path, defaultValue) => {
-      return module.exports.getJSON(obj, path, defaultValue);
-    },
-    setJSON: (path, value, opts) => {
-      return module.exports.setJSON(obj, path, value, opts);
-    }
+    get: (key, defaultValue) => clone(getTreeValue(tree, key, defaultValue)),
+    set: (key, value, options = {}) => clone(setTreeValue(tree, key, value, options)),
+    push: (key, value) => clone(pushTreeValue(tree, key, value)),
+    remove: (key) => clone(removeTreeKey(tree, key)),
+    reset: to => clone(setInitial(to ? to : initialTree)),
+    toString: () => JSON.stringify(tree)
   };
 };
 
-/**
- * Resolves the given path in JSON object and returns value
- *
- * @example .getJSON({foo: {bar: 'baz'}}, 'foo.bar') => 'baz'
- *
- * @param {Object}  json          The JSON object
- * @param {String}  [path=null]   The path to seek. If empty, the entire tree is returned
- *
- * @memberof simplejsonconf
- * @function getJSON
- * @return {Mixed} Result for the path
- */
-module.exports.getJSON = (json, path, defaultValue) => {
-  if ( typeof path === 'string' ) {
-    let result = null;
-    let ns = json;
-
-    path.split(/\./).forEach((k, i, queue) => {
-      if ( i >= queue.length - 1 ) {
-        result = ns[k];
-      } else {
-        ns = ns[k];
-      }
-    });
-
-    return typeof result === 'undefined' ? defaultValue : result;
-  }
-
-  return json;
-};
-
-
-/**
- * Resolves the given path in JSON object and returns value
- *
- * @example .setJSON({foo: {bar: 'baz'}}, 'foo.bar', 'jazz') => {foo: {bar: 'jazz'}}
- *
- * @param {Object}          json                      The JSON object
- * @param {String}          path                      The path to seek. If you set this as 'null' you can define the value as a tree
- * @param {Mixed}           value                     The value to set on the path
- * @param {Object}          [options]                 A set of options
- * @param {Boolean}         [options.prune=false]     Remove 'null' from the tree (this also prunes empty objects)
- * @param {Boolean}         [options.guess=false]     Try to guess what kind of type this value is
- *
- * @memberof simplejsonconf
- * @function setJSON
- * @return {Object} The new JSON object
- */
-module.exports.setJSON = (() => {
-
-  function removeNulls(obj) {
-    const isArray = obj instanceof Array;
-
-    for ( let k in obj ) {
-      if ( obj[k] === null ) {
-        if ( isArray ) {
-          obj.splice(k, 1);
-        } else {
-          delete obj[k];
-        }
-      } else if ( typeof obj[k] === 'object') {
-        removeNulls(obj[k]);
-      }
-    }
-  }
-
-  function getNewTree(key, value) {
-    const queue = key.split(/\./);
-
-    let resulted = {};
-    let ns = resulted;
-
-    queue.forEach((k, i) => {
-      if ( i >= queue.length - 1 ) {
-        ns[k] = value;
-      } else {
-        if ( typeof ns[k] === 'undefined' ) {
-          ns[k] = {};
-        }
-        ns = ns[k];
-      }
-    });
-
-    return resulted;
-  }
-
-  function guessValue(value) {
-    try {
-      return JSON.parse(value);
-    } catch ( e ) {}
-    return String(value);
-  }
-
-  return function(json, path, value, opts) {
-    const isTree = !path;
-    const options = Object.assign({
-      prune: false,
-      guess: false,
-      value: null,
-    }, opts || {});
-
-    if ( !isTree && options.guess ) {
-      value = guessValue(value);
-    }
-
-    let newTree = isTree ? value : getNewTree(path, value);
-    let result = mergeDeep(json, newTree);
-
-    if ( options.prune ) {
-      removeNulls(result);
-    }
-
-    return result;
-  };
-})();
+module.exports = simplejsonconf;
