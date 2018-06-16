@@ -103,7 +103,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Changelog
 
-### 2.0.0
+### 2.0.1
 
 Rewritten with nicer api and cleaner code overall.
 
