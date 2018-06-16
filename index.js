@@ -1,7 +1,7 @@
 /**
- * Module: simplejsonconf
+ * simplejsonconf
  *
- * Use JSON as a configuration file
+ * A simple library to manage JSON as ex. a configuration file
  *
  * @author Anders Evenrud <andersevenrud@gmail.com>
  * @license MIT
@@ -9,7 +9,9 @@
  */
 
 /* Deep-copies any json data */
-const clone = json => JSON.parse(JSON.stringify(json));
+const clone = json => typeof json === 'undefined'
+  ? json
+  : JSON.parse(JSON.stringify(json));
 
 /* Splits a path  Splits a string into piecesstring into pieces */
 const splitKey = key => key.split(/\./g);
@@ -37,24 +39,11 @@ const merge = (target, source) => {
         Object.assign(target, {[key]: source[key]});
       }
     }
+
+    return target;
   }
 
-  return target;
-};
-
-/**
- * Resolves an entry in the tree (i.e. parent of value)
- * @param {object} tree The JSON object
- * @param {string} [key] The key/path to resolve
- * @return {*} A value
- */
-const resolveMutate = (tree, key) => {
-  const path = splitKey(key);
-  const len = path.length;
-  const lastKey = len === 1 ? path[0] : path.pop();
-  const resolved = len === 1 ? tree: getTreeValue(tree, path.join('.'));
-
-  return [resolved, lastKey];
+  return source;
 };
 
 /**
@@ -80,6 +69,34 @@ const getTreeValue = (tree, key, defaultValue) => {
 };
 
 /**
+ * Resolves an entry in the tree (i.e. parent of value)
+ * @param {object} tree The JSON object
+ * @param {string} [key] The key/path to resolve
+ * @param {boolean} [populate] Populates the tree by path
+ * @return {*} A value
+ */
+const resolveMutate = (tree, key, populate) => {
+  const path = splitKey(key);
+  const len = path.length;
+
+  if (populate) {
+    let last = tree;
+    for (let i = 0; i < len; i++) {
+      let k = path[i];
+      if (typeof last[k] === 'undefined') {
+        last[k] = {};
+      }
+      last = last[k];
+    }
+  }
+
+  const lastKey = len === 1 ? path[0] : path.pop();
+  const resolved = len === 1 ? tree : getTreeValue(tree, path.join('.'));
+
+  return [resolved, lastKey];
+};
+
+/**
  * Sets a value in a JSON tree
  * @param {object} tree The JSON object
  * @param {string} [key] The key/path to resolve
@@ -89,7 +106,7 @@ const getTreeValue = (tree, key, defaultValue) => {
  * @return {*} The new value
  */
 const setTreeValue = (tree, key, value, options) => {
-  const [resolved, lastKey] = resolveMutate(tree, key);
+  const [resolved, lastKey] = resolveMutate(tree, key, true);
 
   if (isNullable(resolved[lastKey])) {
     resolved[lastKey] = {};
@@ -128,7 +145,11 @@ const removeTreeKey = (tree, key) => {
   const [resolved, lastKey] = resolveMutate(tree, key);
 
   if (typeof resolved[lastKey] !== 'undefined') {
-    delete resolved[lastKey];
+    if (resolved instanceof Array) {
+      resolved.splice(resolved.indexOf(resolved[lastKey]), 1);
+    } else {
+      delete resolved[lastKey];
+    }
   }
 
   return resolved;
