@@ -29,9 +29,10 @@ test('#get()', () => {
   expect(s.get('b.c')).toEqual(2);
   expect(s.get('b.d')).toEqual(obj.b.d);
   expect(s.get('b.e')).toEqual(obj.b.e);
-
-  // TODO: Default value
-  // TODO: Non-existing key path
+  expect(s.get('b.e', 'ignored')).toEqual(obj.b.e);
+  expect(s.get('c', 'not-ignored')).toEqual('not-ignored');
+  expect(s.get('d')).toEqual(undefined);
+  expect(s.get('d', 'not-ignored')).toEqual('not-ignored');
 });
 
 test('#remove', () => {
@@ -50,7 +51,8 @@ test('#push', () => {
   s.push('b.d', 4);
   expect(s.get('b.d')).toEqual([1, 2, 3, 4]);
 
-  // TODO: Non-array
+  expect(() => s.push('x', 1)).toThrow('array');
+  expect(() => s.push('a', 1)).toThrow('array');
 });
 
 test('#set', () => {
@@ -73,6 +75,17 @@ test('#set', () => {
 
   s.set('unknown1.unknown2.unknown3', 'data');
   expect(s.get('unknown1.unknown2.unknown3')).toEqual('data');
+
+  const empty = {empty: 'now'};
+  s.set('a', empty, {
+    merge: false
+  });
+
+  expect(s.get('a')).toEqual(empty);
+
+  const tst = {foo: 'bar'};
+  s.set('parsetest', JSON.stringify(tst));
+  expect(s.get('parsetest')).toEqual(tst);
 });
 
 test('#reset', () => {

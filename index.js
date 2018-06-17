@@ -103,16 +103,28 @@ const resolveMutate = (tree, key, populate) => {
  * @param {*} value The value
  * @param {object} [options] Options
  * @param {boolean} [options.merge=true] Merge objects if value is also an object
+ * @param {boolean} [options.parse=true] Parses the given value
  * @return {*} The new value
  */
 const setTreeValue = (tree, key, value, options) => {
+  if (options.parse !== false) {
+    try {
+      value = typeof value === 'undefined'
+        ? value
+        : JSON.parse(value);
+    } catch (e) {}
+  }
+
   const [resolved, lastKey] = resolveMutate(tree, key, true);
 
   if (isNullable(resolved[lastKey])) {
     resolved[lastKey] = {};
   }
 
-  const newValue = merge(resolved[lastKey], value);
+  const newValue = options.merge !== false
+    ? merge(resolved[lastKey], value)
+    : value;
+
   resolved[lastKey] = newValue;
   return newValue;
 };

@@ -12,7 +12,6 @@
 const simplejsonconf = require('simplejsonconf')
 
 // Create a new instance with an initial tree
-// The given object is cloned so you cannot mutate this from the outside
 const jsonconf = simplejsonconf({
   foo: 'bar',
   sounds: {
@@ -50,6 +49,10 @@ jsonconf.set('ui.colors', {
   white: '#ffffff'
 }, {
   merge: true // Objects will merge by default
+})
+
+jsonconf.set('ui.colors', '{"black":"#000000"}', {
+  parse: true // Input will be parsed by default
 })
 
 
@@ -103,6 +106,14 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Changelog
 
+### 2.0.3
+
+Some minor improvements.
+
+### 2.0.2
+
+Bugfixes and unit tests.
+
 ### 2.0.1
 
 Rewritten with nicer api and cleaner code overall.
@@ -111,4 +122,4 @@ Rewritten with nicer api and cleaner code overall.
 
 ### 1.0.x
 
-Original release
+Original release.
