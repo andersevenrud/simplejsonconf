@@ -86,6 +86,14 @@ test('#set', () => {
   const tst = {foo: 'bar'};
   s.set('parsetest', JSON.stringify(tst));
   expect(s.get('parsetest')).toEqual(tst);
+
+  s.reset();
+  s.set(null, {
+    'nokey': 'yes'
+  });
+
+  expect(s.get('nokey')).toEqual('yes');
+  expect(s.get('a')).toEqual(1);
 });
 
 test('#reset', () => {

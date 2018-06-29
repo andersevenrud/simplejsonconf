@@ -115,6 +115,14 @@ const setTreeValue = (tree, key, value, options) => {
     } catch (e) {}
   }
 
+  if (isNullable(key)) {
+    const newValue = options.merge !== false
+      ? merge(tree, value)
+      : value;
+
+    return Object.assign(tree, newValue);
+  }
+
   const [resolved, lastKey] = resolveMutate(tree, key, true);
 
   if (isNullable(resolved[lastKey])) {
