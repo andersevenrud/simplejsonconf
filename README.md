@@ -106,6 +106,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Changelog
 
+### 2.0.4
+
+Added missing 'no key' setter support
+
 ### 2.0.3
 
 Some minor improvements.
