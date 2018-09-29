@@ -205,4 +205,4 @@ const simplejsonconf = (initialTree) => {
   };
 };
 
-module.exports = simplejsonconf;
+export default simplejsonconf;

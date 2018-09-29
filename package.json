@@ -2,10 +2,19 @@
   "name": "simplejsonconf",
   "version": "2.0.4",
   "description": "A simple library to manage JSON as ex. a configuration file",
-  "main": "index.js",
+  "main": "dist/main.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "build": "webpack",
+    "watch": "webpack --watch",
+    "prepublishOnly": "rm ./dist/* && NODE_ENV=production npm run build"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENCE",
+    "CHANGELOG"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/andersevenrud/simplejsonconf.git"
@@ -15,5 +24,14 @@
   "bugs": {
     "url": "https://github.com/andersevenrud/simplejsonconf/issues"
   },
-  "homepage": "https://github.com/andersevenrud/simplejsonconf#readme"
+  "homepage": "https://github.com/andersevenrud/simplejsonconf#readme",
+  "dependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-transform-runtime": "^7.1.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/runtime": "^7.1.2",
+    "babel-loader": "^8.0.4",
+    "webpack": "^4.20.2",
+    "webpack-cli": "^3.1.2"
+  }
 }
